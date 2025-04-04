@@ -1,0 +1,141 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyMzz6gNIUzNX6qfsfHMewdM",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/vindhya-sri/machine-learning-lab/blob/main/Ex-2\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 1,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "cDiHh54LPpZT",
+        "outputId": "fbf3a7a9-7e49-4992-b1b5-790d22f6e620"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Specific Hypotheses (S): [['?', '?', '?']]\n",
+            "General Hypotheses (G): [['?', '0', '0']]\n"
+          ]
+        }
+      ],
+      "source": [
+        "class CandidateElimination:\n",
+        "    def __init__(self, attributes):\n",
+        "        self.attributes = attributes\n",
+        "        self.S = []  # Specific hypotheses\n",
+        "        self.G = []  # General hypotheses\n",
+        "\n",
+        "    def initialize(self):\n",
+        "        # Initialize S with the most specific hypothesis\n",
+        "        self.S = [['0'] * len(self.attributes)]\n",
+        "        # Initialize G with the most general hypothesis\n",
+        "        self.G = [['?'] * len(self.attributes)]\n",
+        "\n",
+        "    def is_consistent(self, hypothesis, example):\n",
+        "        for h, e in zip(hypothesis, example):\n",
+        "            if h != '?' and h != e:\n",
+        "                return False\n",
+        "        return True\n",
+        "\n",
+        "    def update_hypotheses(self, example, target):\n",
+        "        if target == '1':  # Positive example\n",
+        "            # Update S\n",
+        "            new_S = []\n",
+        "            for s in self.S:\n",
+        "                if self.is_consistent(s, example):\n",
+        "                    new_S.append(s)\n",
+        "                else:\n",
+        "                    # Generalize s\n",
+        "                    new_hypothesis = s[:]\n",
+        "                    for i in range(len(s)):\n",
+        "                        if s[i] != example[i]:\n",
+        "                            new_hypothesis[i] = '?'\n",
+        "                    new_S.append(new_hypothesis)\n",
+        "            self.S = new_S\n",
+        "\n",
+        "            # Update G\n",
+        "            new_G = []\n",
+        "            for g in self.G:\n",
+        "                if self.is_consistent(g, example):\n",
+        "                    new_G.append(g)\n",
+        "            self.G = new_G\n",
+        "\n",
+        "        elif target == '0':  # Negative example\n",
+        "            # Update G\n",
+        "            new_G = []\n",
+        "            for g in self.G:\n",
+        "                if not self.is_consistent(g, example):\n",
+        "                    new_G.append(g)\n",
+        "                else:\n",
+        "                    # Specialize g\n",
+        "                    for i in range(len(g)):\n",
+        "                        if g[i] == '?' and example[i] == '1':\n",
+        "                            new_hypothesis = g[:]\n",
+        "                            new_hypothesis[i] = '0'\n",
+        "                            new_G.append(new_hypothesis)\n",
+        "            self.G = new_G\n",
+        "\n",
+        "    def fit(self, training_data):\n",
+        "        self.initialize()\n",
+        "        for example, target in training_data:\n",
+        "            self.update_hypotheses(example, target)\n",
+        "\n",
+        "    def get_hypotheses(self):\n",
+        "        return self.S, self.G\n",
+        "\n",
+        "\n",
+        "# Example usage\n",
+        "if __name__ == \"__main__\":\n",
+        "    # Define the attributes\n",
+        "    attributes = ['color', 'size', 'shape']\n",
+        "\n",
+        "    # Create an instance of the Candidate Elimination algorithm\n",
+        "    ce = CandidateElimination(attributes)\n",
+        "\n",
+        "    # Define training data: (example, target)\n",
+        "    training_data = [\n",
+        "        (['1', '1', '0'], '1'),  # Positive example\n",
+        "        (['0', '1', '0'], '0'),  # Negative example\n",
+        "        (['1', '0', '1'], '1'),  # Positive example\n",
+        "        (['0', '0', '1'], '0'),  # Negative example\n",
+        "    ]\n",
+        "\n",
+        "    # Fit the model to the training data\n",
+        "    ce.fit(training_data)\n",
+        "\n",
+        "    # Get the specific and general hypotheses\n",
+        "    S, G = ce.get_hypotheses()\n",
+        "    print(\"Specific Hypotheses (S):\", S)\n",
+        "    print(\"General Hypotheses (G):\", G)"
+      ]
+    }
+  ]
+}
