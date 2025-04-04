@@ -1,0 +1,255 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyOl0Dklx5RSy/iEzP6+RbBN",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/vindhya-sri/machine-learning-lab/blob/main/Experiment-3\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "class CandidateElimination:\n",
+        "    def __init__(self, attributes):\n",
+        "        self.attributes = attributes\n",
+        "        self.S = []  # Specific hypotheses\n",
+        "        self.G = []  # General hypotheses\n",
+        "\n",
+        "    def initialize(self):\n",
+        "        # Initialize S with the most specific hypothesis\n",
+        "        self.S = [['0'] * len(self.attributes)]\n",
+        "        # Initialize G with the most general hypothesis\n",
+        "        self.G = [['?'] * len(self.attributes)]\n",
+        "\n",
+        "    def is_consistent(self, hypothesis, example):\n",
+        "        for h, e in zip(hypothesis, example):\n",
+        "            if h != '?' and h != e:\n",
+        "                return False\n",
+        "        return True\n",
+        "\n",
+        "    def update_hypotheses(self, example, target):\n",
+        "        if target == '1':  # Positive example\n",
+        "            # Update S\n",
+        "            new_S = []\n",
+        "            for s in self.S:\n",
+        "                if self.is_consistent(s, example):\n",
+        "                    new_S.append(s)\n",
+        "                else:\n",
+        "                    # Generalize s\n",
+        "                    new_hypothesis = s[:]\n",
+        "                    for i in range(len(s)):\n",
+        "                        if s[i] != example[i]:\n",
+        "                            new_hypothesis[i] = '?'\n",
+        "                    new_S.append(new_hypothesis)\n",
+        "            self.S = new_S\n",
+        "\n",
+        "            # Update G\n",
+        "            new_G = []\n",
+        "            for g in self.G:\n",
+        "                if self.is_consistent(g, example):\n",
+        "                    new_G.append(g)\n",
+        "            self.G = new_G\n",
+        "\n",
+        "        elif target == '0':  # Negative example\n",
+        "            # Update G\n",
+        "            new_G = []\n",
+        "            for g in self.G:\n",
+        "                if not self.is_consistent(g, example):\n",
+        "                    new_G.append(g)\n",
+        "                else:\n",
+        "                    # Specialize g\n",
+        "                    for i in range(len(g)):\n",
+        "                        if g[i] == '?' and example[i] == '1':\n",
+        "                            new_hypothesis = g[:]\n",
+        "                            new_hypothesis[i] = '0'\n",
+        "                            new_G.append(new_hypothesis)\n",
+        "            self.G = new_G\n",
+        "\n",
+        "    def fit(self, training_data):\n",
+        "        self.initialize()\n",
+        "        for example, target in training_data:\n",
+        "            self.update_hypotheses(example, target)\n",
+        "\n",
+        "    def get_hypotheses(self):\n",
+        "        return self.S, self.G\n",
+        "\n",
+        "\n",
+        "# Example usage\n",
+        "if __name__ == \"__main__\":\n",
+        "    # Define the attributes\n",
+        "    attributes = ['color', 'size', 'shape']\n",
+        "\n",
+        "    # Create an instance of the Candidate Elimination algorithm\n",
+        "    ce = CandidateElimination(attributes)\n",
+        "\n",
+        "    # Define training data: (example, target)\n",
+        "    training_data = [\n",
+        "        (['1', '1', '0'], '1'),  # Positive example\n",
+        "        (['0', '1', '0'], '0'),  # Negative example\n",
+        "        (['1', '0', '1'], '1'),  # Positive example\n",
+        "        (['0', '0', '1'], '0'),  # Negative example\n",
+        "    ]\n",
+        "\n",
+        "    # Fit the model to the training data\n",
+        "    ce.fit(training_data)\n",
+        "\n",
+        "    # Get the specific and general hypotheses\n",
+        "    S, G = ce.get_hypotheses()\n",
+        "    print(\"Specific Hypotheses (S):\", S)\n",
+        "    print(\"General Hypotheses (G):\", G)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "ql5umwEPNJxd",
+        "outputId": "c6c44ccf-b4d5-4217-f825-2e9db1af34e3"
+      },
+      "execution_count": 8,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Specific Hypotheses (S): [['?', '?', '?']]\n",
+            "General Hypotheses (G): [['?', '0', '0']]\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import pandas as pd\n",
+        "import numpy as np\n",
+        "\n",
+        "# Function to calculate entropy\n",
+        "def entropy(target):\n",
+        "    values, counts = np.unique(target, return_counts=True)\n",
+        "    probabilities = counts / len(target)\n",
+        "    return -np.sum(probabilities * np.log2(probabilities))\n",
+        "\n",
+        "# Function to calculate information gain\n",
+        "def information_gain(data, attribute, target_name):\n",
+        "    total_entropy = entropy(data[target_name])\n",
+        "    values, counts = np.unique(data[attribute], return_counts=True)\n",
+        "    weighted_entropy = np.sum((counts[i] / np.sum(counts) *\n",
+        "                               entropy(data[data[attribute] == values[i]][target_name])\n",
+        "                               for i in range(len(values))))\n",
+        "    return total_entropy - weighted_entropy\n",
+        "\n",
+        "# ID3 algorithm to build the decision tree\n",
+        "def id3(data, target_name, attributes):\n",
+        "    if len(np.unique(data[target_name])) == 1:\n",
+        "        return np.unique(data[target_name])[0]\n",
+        "\n",
+        "    if len(attributes) == 0:\n",
+        "        return data[target_name].mode()[0]\n",
+        "\n",
+        "    gains = [information_gain(data, attr, target_name) for attr in attributes]\n",
+        "    best_attr = attributes[np.argmax(gains)]\n",
+        "\n",
+        "    tree = {best_attr: {}}\n",
+        "    values = np.unique(data[best_attr])\n",
+        "\n",
+        "    for value in values:\n",
+        "        subset = data[data[best_attr] == value]\n",
+        "        subtree = id3(subset, target_name, [attr for attr in attributes if attr != best_attr])\n",
+        "        tree[best_attr][value] = subtree\n",
+        "\n",
+        "    return tree\n",
+        "\n",
+        "# Function to classify a new sample using the decision tree\n",
+        "def classify(tree, sample):\n",
+        "    if not isinstance(tree, dict):\n",
+        "        return tree  # Leaf node\n",
+        "    attribute = next(iter(tree))  # Get the attribute to split on\n",
+        "    attribute_value = sample[attribute]\n",
+        "    if attribute_value in tree[attribute]:\n",
+        "        return classify(tree[attribute][attribute_value], sample)\n",
+        "    else:\n",
+        "        return None  # Unknown attribute value\n",
+        "\n",
+        "# Sample dataset\n",
+        "data = pd.DataFrame({\n",
+        "    'Outlook': ['Sunny', 'Sunny', 'Overcast', 'Rainy', 'Rainy', 'Rainy', 'Overcast', 'Sunny', 'Sunny', 'Rainy'],\n",
+        "    'Temperature': ['Hot', 'Hot', 'Hot', 'Mild', 'Cool', 'Cool', 'Mild', 'Mild', 'Hot', 'Mild'],\n",
+        "    'Humidity': ['High', 'High', 'High', 'Normal', 'Normal', 'High', 'Normal', 'Normal', 'High', 'Normal'],\n",
+        "    'Windy': [False, True, False, False, False, True, True, False, True, True],\n",
+        "    'Play': ['No', 'No', 'Yes', 'Yes', 'Yes', 'No', 'Yes', 'No', 'Yes', 'Yes']\n",
+        "})\n",
+        "\n",
+        "# Define the target variable and attributes\n",
+        "target_name = 'Play'\n",
+        "attributes = list(data.columns[:-1])\n",
+        "\n",
+        "# Build the decision tree\n",
+        "decision_tree = id3(data, target_name, attributes)\n",
+        "\n",
+        "# Print the decision tree\n",
+        "print(\"Decision Tree:\")\n",
+        "print(decision_tree)\n",
+        "\n",
+        "# Classify a new sample\n",
+        "new_sample = {\n",
+        "    'Outlook': 'Sunny',\n",
+        "    'Temperature': 'Cool',\n",
+        "    'Humidity': 'High',\n",
+        "    'Windy': False\n",
+        "}\n",
+        "\n",
+        "# Classify the new sample\n",
+        "result = classify(decision_tree, new_sample)\n",
+        "print(\"\\nClassification Result for the new sample:\", result)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "v51Oddu2NZAN",
+        "outputId": "56c0745e-6051-41eb-a6fd-9a8a2ec52044"
+      },
+      "execution_count": 11,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Decision Tree:\n",
+            "{'Outlook': {'Overcast': 'Yes', 'Rainy': {'Humidity': {'High': 'No', 'Normal': 'Yes'}}, 'Sunny': {'Windy': {np.False_: 'No', np.True_: {'Temperature': {'Hot': {'Humidity': {'High': 'No'}}}}}}}}\n",
+            "\n",
+            "Classification Result for the new sample: No\n"
+          ]
+        },
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "<ipython-input-11-23c32b91e5b3>:14: DeprecationWarning: Calling np.sum(generator) is deprecated, and in the future will give a different result. Use np.sum(np.fromiter(generator)) or the python sum builtin instead.\n",
+            "  weighted_entropy = np.sum((counts[i] / np.sum(counts) *\n"
+          ]
+        }
+      ]
+    }
+  ]
+}
